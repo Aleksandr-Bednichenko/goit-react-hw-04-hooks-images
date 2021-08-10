@@ -2,8 +2,8 @@ import React from 'react';
 import styles from './ImageGalleryItem.module.css';
 import PropTypes from 'prop-types';
 
-const ImageGalleryItem = ({ id, src, largeImg }) => (
-  <li className={styles.ImageGalleryItem} key={id}>
+const ImageGalleryItem = ({src, largeImg }) => (
+  <li className={styles.ImageGalleryItem} >
     <img
       src={src}
       alt=""
@@ -16,7 +16,7 @@ const ImageGalleryItem = ({ id, src, largeImg }) => (
 );
 
 ImageGalleryItem.propTypes = {
-  id: PropTypes.string.isRequired,
+  
   src: PropTypes.string.isRequired,
   largeImg: PropTypes.string.isRequired,
 };

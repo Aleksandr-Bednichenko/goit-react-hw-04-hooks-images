@@ -1,4 +1,4 @@
-import React from 'react';
+import {useState, useEffect} from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Searchbar from './Components/Searchbar';
@@ -9,114 +9,94 @@ import Button from './Components/Button';
 import Modal from './Components/Modal';
 import Load from './Components/Loader';
 
-class App extends React.Component {
-  state = {
-    imgName: '',
-    page: 1,
-    images: [],
-    error: null,
-    isLoading: false,
-    shouldScroll: false,
-    currentImages: '',
-    openModal: false,
+function App () {
+  
+  const [imgName, setImgName] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentImages, setCurrentImages] = useState('');
+  const [openModal, setOpenModal] = useState(false);
+
+  useEffect(()=>{
+
+  if (!imgName) return;
+
+    const fetchImages  = async () =>  {
+    loaderToggle();
+    
+      
+      return imgApi
+        .fetchImg(imgName, page)
+        .then(images =>
+          setImages(prevState => [...prevState, ...images.hits]
+          )
+        )
+        .finally(() => loaderToggle());
+    
   };
+  fetchImages();
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevName = prevState.imgName;
-    const nextName = this.state.imgName;
+  },[imgName, page])
 
-    if (prevName !== nextName) {
-      this.fetchImages();
-    }
-    console.log(this.state.images);
-    if (this.state.images.length > 10) {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: 'smooth',
+  const scrollPage = () => {
+    setTimeout(() => {
+      window.scrollBy({
+        top: document.documentElement.clientHeight - 160,
+        behavior: "smooth",
       });
+    }, 800);
+  };
+  
+
+ const handleSearchbarSubmit = imgName => {
+   setImgName(imgName);
+   setPage(1);
+   setImages([]);
+  };
+
+ const OnLoadMore = () => {
+    setPage(prev => prev + 1);
+    if (imgName) {
+      loaderToggle();
+      scrollPage();
+      loaderToggle();
     }
-  }
-
-  handleButton = () => {
-    this.fetchImages();
-    if (this.state.page > 1) {
-      this.setState({ shouldScroll: true });
-    }
   };
 
-  handleSearchbarSubmit = imgName => {
-    this.setState({
-      imgName,
-      page: 1,
-      images: [],
-    });
+  const loaderToggle = () => {
+    setIsLoading(prev => !prev);
   };
 
-  OnLoadMore = () => {
-    this.setState(prev => ({
-      page: prev.page + 1,
-    }));
-    this.fetchImages();
-  };
-
-  loaderToggle = () => {
-    this.setState(prev => ({
-      isLoading: !prev.isLoading,
-    }));
-  };
-
-  onImgClick = e => {
+  const onImgClick = e => {
     if (e.target.nodeName !== 'IMG') {
       return;
     }
-    this.setState({
-      currentImages: e.target.dataset.img,
-    });
-    this.toggleModal();
+    setCurrentImages(e.target.dataset.img);
+    toggleModal();
   };
 
-  toggleModal = () => {
-    this.setState(prev => ({
-      openModal: !prev.openModal,
-    }));
+  const toggleModal = () => {
+    setOpenModal(prev => !prev);
   };
 
-  fetchImages = () => {
-    this.loaderToggle();
-    return setTimeout(() => {
-      const { imgName, page } = this.state;
-      imgApi
-        .fetchImg(imgName, page)
-        .then(images =>
-          this.setState(prevState => ({
-            images: [...prevState.images, ...images.hits],
-            page: prevState.page + 1,
-          })),
-        )
-        .catch(error => this.setState({ error: true }))
-        .finally(() => this.loaderToggle());
-    }, 1000);
-  };
-
-  render() {
-    const { images, isLoading, openModal, currentImages } = this.state;
     return (
       <div className={styles.App}>
-        <Searchbar onSubmit={this.handleSearchbarSubmit} />
-        <ImageGallery images={images} onImgClick={this.onImgClick} />
+        <Searchbar onSubmit={handleSearchbarSubmit} />
+        <ImageGallery images={images} onImgClick={onImgClick} />
         {isLoading && <Load />}
         {images.length > 0 && !isLoading && (
-          <Button onBtnClick={this.OnLoadMore} text={'Загрузить еще'} />
+          <Button onBtnClick={OnLoadMore} text={'Загрузить еще'} />
         )}
         <ToastContainer autoClose={3000} />
 
         {openModal && (
-          <Modal onCloseModal={this.toggleModal}>
+          <Modal onCloseModal={toggleModal}>
             <img src={currentImages} alt="Dont Worry Be Happy" />
           </Modal>
         )}
       </div>
     );
   }
-}
+
 export default App;
